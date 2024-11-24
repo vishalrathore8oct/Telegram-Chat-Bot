@@ -18,4 +18,4 @@ const paragraphSchema = new mongoose.Schema({
 
 const Paragraph = mongoose.model('Paragraph', paragraphSchema);
 
-export default Paragraph
+export { Paragraph }

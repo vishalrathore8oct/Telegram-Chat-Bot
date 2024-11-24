@@ -8,15 +8,7 @@ const userSchema = new mongoose.Schema({
     username: {
         type: String,
         required: true
-    }, 
-    firstName: {
-        type: String,
-        required: true
-    }, 
-    lastName: {
-        type: String,
-        required: true
-    }, 
+    },
     selectedCategoryId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category'
@@ -49,4 +41,4 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-export default User
+export { User}

@@ -4,7 +4,7 @@ const questionSchema = new mongoose.Schema({
     questionData: {
         type: String,
         required: true
-    }, 
+    },
     allOptions: [
         {
             type: String,
@@ -22,4 +22,4 @@ const questionSchema = new mongoose.Schema({
 
 const Question = mongoose.model('Question', questionSchema);
 
-export default Question
+export { Question }
