@@ -137,7 +137,6 @@ async function sendQuestion(ctx, questionIdsArr) {
             { upsert: true }
         );
 
-        // console.log("Current Question Index and id updated:")
 
         const question = await Question.findById(
             questionIdsArr[questionCurrentIndex]
@@ -254,7 +253,7 @@ bot.on("callback_query", async (ctx) => {
                     { upsert: true }
                 );
 
-                await ctx.reply("Wow ! Correct Answer!");
+                await ctx.reply("Great job! That’s correct!");
             } else {
                 await User.findOneAndUpdate(
                     { telegramId: ctx.from.id },
@@ -262,7 +261,8 @@ bot.on("callback_query", async (ctx) => {
                     { upsert: true }
                 );
 
-                await ctx.reply("Oh No ! Wrong Answer!");
+                await ctx.reply(`Good try! The correct answer
+is ${question.correctAnswer}`);
             }
 
             await User.findOneAndUpdate(
@@ -290,10 +290,9 @@ bot.on("callback_query", async (ctx) => {
             You got ${user.correctAnswerCount} out of ${questionIdsArr.length} questions correctly!`);
 
 
-                await ctx.reply("For Restarting the Quiz please click on /startquiz");
+                await ctx.reply("Click on /startquiz for start a new Quiz.");
             }
 
-            console.log("Completed Question:");
         } else {
             console.log("Unknown callback data:", callbackData);
         }
