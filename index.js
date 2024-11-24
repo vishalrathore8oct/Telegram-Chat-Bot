@@ -261,8 +261,7 @@ bot.on("callback_query", async (ctx) => {
                     { upsert: true }
                 );
 
-                await ctx.reply(`Good try! The correct answer
-is ${question.correctAnswer}`);
+                await ctx.reply(`Good try! The correct answer is \n"${question.correctAnswer}"`);
             }
 
             await User.findOneAndUpdate(
@@ -280,21 +279,67 @@ is ${question.correctAnswer}`);
             user = await User.findOne({ telegramId: ctx.from.id });
 
             if (user.currentQuesionIndex < questionIdsArr.length) {
-                await ctx.reply("Next Question");
-                await sendQuestion(ctx, questionIdsArr);
+
+                const nextKeyboard = {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: "Next Question",
+                                    callback_data: JSON.stringify({ action: "nextQuestion" }),
+                                },
+                            ],
+                            [
+                                {
+                                    text: "Select Another Category",
+                                    callback_data: JSON.stringify({ action: "selectCategory" }),
+                                },
+                            ],
+                        ],
+                    },
+                };
+        
+                await ctx.reply(
+                    "Click on Next Question to move to the next question. \nClick on Select Another Category to start a new Quiz.",
+                    nextKeyboard
+                );
+
+                // await ctx.reply("Next Question");
+
+                // await sendQuestion(ctx, questionIdsArr);
             } else {
 
-                await ctx.reply(`Congratulations! You have completed the Quiz.
-                Correct Answers: ${user.correctAnswerCount}
-                Wrong Answers: ${user.wrongAnswerCount}
-            You got ${user.correctAnswerCount} out of ${questionIdsArr.length} questions correctly!`);
+                await ctx.reply(`Congratulations! You have completed the Quiz. \nCorrect Answers: ${user.correctAnswerCount} \nWrong Answers: ${user.wrongAnswerCount} \nYou got ${user.correctAnswerCount} out of ${questionIdsArr.length} questions correctly!`);
 
 
                 await ctx.reply("Click on /startquiz for start a new Quiz.");
             }
 
-        } else {
-            console.log("Unknown callback data:", callbackData);
+        } else if (decodeData.action === "nextQuestion") {
+            let user = await User.findOne({ telegramId: ctx.from.id });
+
+            let paragraphId = user.selectedParagraphId;
+
+            const selectedParagraph = await Paragraph.findById(paragraphId);
+
+            const questionIdsArr = selectedParagraph.questionIds;
+
+            await sendQuestion(ctx, questionIdsArr);
+            
+        } else if (decodeData.action === "selectCategory") {
+            await User.findOneAndUpdate(
+                { telegramId: ctx.from.id },
+                {
+                    $set: {
+                        correctAnswerCount: 0,
+                        wrongAnswerCount: 0,
+                        currentQuesionIndex: 0,
+                    },
+                },
+                { upsert: true }
+            );
+
+            await sendCategory(ctx);
         }
     } catch (error) {
         console.log("Error processing callback query:", error);
