@@ -36,37 +36,44 @@ bot.start(async (ctx) => {
 });
 
 bot.command("startquiz", async (ctx) => {
+
+    await User.findOneAndUpdate(
+        { telegramId: ctx.from.id },
+        { $set: { correctAnswerCount: 0, wrongAnswerCount: 0, currentQuesionIndex: 0 } },
+        { upsert: true }
+    );
+    
+    const telegramId = ctx.from.id;
+    const username = ctx.from.username;
+    let user = await User.findOne({ telegramId: telegramId });
+    if (!user) {
+        user = await User.create({ telegramId: telegramId, username: username });
+    }
     await ctx.reply(`Welcome to the Quiz world!`);
     await sendCategory(ctx);
 });
 
+
+
 async function sendCategory(ctx) {
-    const categoryArray = [];
     const categories = await Category.find();
-    // console.log(categories);
 
-    for (const category of categories) {
-        let data = { seletedCategoryId: category._id };
-        // console.log(data);
-        let encodedData = JSON.stringify(data);
-        // console.log(encodedData);
-        categoryArray.push({
-            text: category.categoryName,
-            callback_data: encodedData,
-        });
-    }
-
-    // console.log(categoryArray);
+    const categoryArray = categories.map((category) => ({
+        text: category.categoryName,
+        callback_data: JSON.stringify({ seletedCategoryId: category._id }),
+        
+    }))
 
     const keyboard = {
         reply_markup: {
-            inline_keyboard: [categoryArray],
+            inline_keyboard: [categoryArray]
         },
     };
 
     await ctx.reply("Please select a category and click on it:", keyboard);
-}
 
+
+}
 
 async function sendParagraph(ctx, paragraphIdsArr) {
 
@@ -76,19 +83,19 @@ async function sendParagraph(ctx, paragraphIdsArr) {
     const paragraph = await Paragraph.findById(paragraphIdsArr[randomIndex]);
     // console.log(paragraph);
 
+    
+
     await ctx.reply("Please Read the Paragraph carefully Before Starting!");
 
     await ctx.reply(paragraph.paragraphData);
 
     // console.log(paragraph._id);
 
-    let data = { seletedParagraphId: paragraph._id };
-    let encodedData = JSON.stringify(data);
 
     const startKeyboard = {
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'Start', callback_data: encodedData }]
+                [{ text: 'Start Quiz', callback_data: JSON.stringify({ seletedParagraphId: paragraph._id }) }]
             ]
         }
     };
@@ -102,19 +109,31 @@ async function sendQuestion(ctx, questionIdsArr) {
 
 
     console.log(questionIdsArr);
-    let questionCurrentIndex = 0;
 
+    let user = await User.findOne({ telegramId: ctx.from.id });
+
+    let questionCurrentIndex = user.currentQuesionIndex;
+
+    await User.findOneAndUpdate(
+        { telegramId: ctx.from.id },
+        { $set: { currentQuestionId: questionIdsArr[questionCurrentIndex] } },
+        { upsert: true }
+    );
+
+    // console.log("Current Question Index and id updated:")
+    
     const question = await Question.findById(questionIdsArr[questionCurrentIndex]);
-    console.log(question);
+
+    // console.log(question);
 
 
     const optionKeyboard = {
         reply_markup: {
             inline_keyboard: [
-                [{ text: question.allOptions[0], callback_data: JSON.stringify({ seletedQuestionId: question._id }) }],
-                [{ text: question.allOptions[1], callback_data: JSON.stringify({ seletedQuestionId: question._id }) }],
-                [{ text: question.allOptions[2], callback_data: JSON.stringify({ seletedQuestionId: question._id }) }],
-                [{ text: question.allOptions[3], callback_data: JSON.stringify({ seletedQuestionId: question._id }) }],
+                [{ text: question.allOptions[0], callback_data: JSON.stringify({selectedOption: question.allOptions[0] }) }],
+                [{ text: question.allOptions[1], callback_data: JSON.stringify({selectedOption: question.allOptions[1] }) }],
+                [{ text: question.allOptions[2], callback_data: JSON.stringify({selectedOption: question.allOptions[2] }) }],
+                [{ text: question.allOptions[3], callback_data: JSON.stringify({selectedOption: question.allOptions[3] }) }],
             ],
         },
     };
@@ -133,6 +152,7 @@ bot.on("callback_query", async (ctx) => {
     console.log("Received callback data:", callbackData);
 
     let decodeData;
+
     try {
         decodeData = JSON.parse(callbackData);
 
@@ -143,20 +163,36 @@ bot.on("callback_query", async (ctx) => {
 
     }
 
-
-
     if (decodeData.seletedCategoryId) {
+
         let selectedCategoryId = decodeData.seletedCategoryId;
 
         const selectedCategory = await Category.findById(selectedCategoryId);
+
         // console.log("Selected Category:", selectedCategory);
 
         const paragraphIdsArr = selectedCategory.paragraphIds;
 
+        await User.findOneAndUpdate(
+            { telegramId: ctx.from.id },
+            { $set: { selectedCategoryId: selectedCategory._id } },
+            { upsert: true }
+        );
+        
+
         await sendParagraph(ctx, paragraphIdsArr);
+
+
+
     } else if (decodeData.seletedParagraphId) {
 
         let selectedParagraphId = decodeData.seletedParagraphId;
+
+        await User.findOneAndUpdate(
+            { telegramId: ctx.from.id },
+            { $set: { selectedParagraphId: selectedParagraphId } },
+            { upsert: true }
+        );
 
         const selectedParagraph = await Paragraph.findById(selectedParagraphId);
         // console.log("Selected Paragraph:", selectedParagraph);
@@ -166,11 +202,80 @@ bot.on("callback_query", async (ctx) => {
 
 
         await sendQuestion(ctx, questionIdsArr);
-    } else if (decodeData.seletedQuestionId) {
+    } else if (decodeData.selectedOption) {
 
-        let selectedQuestionId = decodeData.seletedQuestionId;
+        let selectedOption = decodeData.selectedOption;
 
-        console.log("visited");
+
+        let user = await User.findOne({ telegramId: ctx.from.id });
+
+
+        let currentQuestionId = user.currentQuestionId;
+
+        const question = await Question.findById(currentQuestionId);
+
+        if (selectedOption === question.correctAnswer) {
+            await User.findOneAndUpdate(
+                { telegramId: ctx.from.id },
+                { $inc: { correctAnswerCount: 1 } },
+                { upsert: true }
+            );
+
+            await ctx.reply("Wow ! Correct Answer!");
+
+        } else {
+            await User.findOneAndUpdate(
+                { telegramId: ctx.from.id },
+                { $inc: { wrongAnswerCount: 1 } },
+                { upsert: true }
+            );
+
+            await ctx.reply("Oh No ! Wrong Answer!");
+        }
+
+
+        await User.findOneAndUpdate(
+            { telegramId: ctx.from.id },
+            { $inc: { currentQuesionIndex: 1 } },
+            { upsert: true }
+        );
+
+        // await User.findOneAndUpdate(
+        //     { telegramId: ctx.from.id },
+        //     { $set: { selectedOption: selectedOption } },
+        //     { upsert: true }
+        // );
+
+
+        let paragraphId = user.selectedParagraphId;
+
+        const selectedParagraph = await Paragraph.findById(paragraphId);
+
+        const questionIdsArr = selectedParagraph.questionIds;
+
+        user = await User.findOne({ telegramId: ctx.from.id });
+
+        if (user.currentQuesionIndex < questionIdsArr.length) {
+            await ctx.reply("Next Question");
+            await sendQuestion(ctx, questionIdsArr);
+        } else {
+            await ctx.reply("You have completed the quiz!");
+            await ctx.reply("Please check your results below:");
+
+            let correctAnswerCount = user.correctAnswerCount;
+            let wrongAnswerCount = user.wrongAnswerCount;
+
+            await ctx.reply(`Correct Answers: ${correctAnswerCount}`);
+            await ctx.reply(`Wrong Answers: ${wrongAnswerCount}`);
+            await ctx.reply(`You got ${correctAnswerCount} out of ${questionIdsArr.length} questions correctly!`);
+
+            await ctx.reply("For Restarting the Quiz please click on /startquiz");
+
+        }   
+
+
+        console.log("Completed Question:");
+        
 
 
     }
