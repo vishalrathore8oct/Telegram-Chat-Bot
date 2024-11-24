@@ -16,10 +16,8 @@ dotenv.config();
         );
         console.log("Connected to MongoDB Successfully");
 
-
         bot.launch();
         console.log("Bot is running...");
-
     } catch (error) {
         console.error("Error connecting to MongoDB:", error);
         process.exit(1);
@@ -31,265 +29,285 @@ const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 // ---------------------Telegram UI part-------------------//
 
 bot.start(async (ctx) => {
-    await ctx.reply(`Hello ${ctx.from.first_name} ${ctx.from.last_name}!`);
-    await ctx.reply(`Plese Enter or Press /startquiz to start the quiz!`);
+    try {
+        await ctx.reply(`Hello ${ctx.from.first_name} ${ctx.from.last_name}!`);
+        await ctx.reply(`Plese Enter or Press /startquiz to start the quiz!`);
+    } catch (error) {
+        console.log("Error starting the bot:", error);
+    }
 });
 
 bot.command("startquiz", async (ctx) => {
+    try {
+        await User.findOneAndUpdate(
+            { telegramId: ctx.from.id },
+            {
+                $set: {
+                    correctAnswerCount: 0,
+                    wrongAnswerCount: 0,
+                    currentQuesionIndex: 0,
+                },
+            },
+            { upsert: true }
+        );
 
-    await User.findOneAndUpdate(
-        { telegramId: ctx.from.id },
-        { $set: { correctAnswerCount: 0, wrongAnswerCount: 0, currentQuesionIndex: 0 } },
-        { upsert: true }
-    );
-    
-    const telegramId = ctx.from.id;
-    const username = ctx.from.username;
-    let user = await User.findOne({ telegramId: telegramId });
-    if (!user) {
-        user = await User.create({ telegramId: telegramId, username: username });
+        const telegramId = ctx.from.id;
+        const username = ctx.from.username;
+        let user = await User.findOne({ telegramId: telegramId });
+        if (!user) {
+            user = await User.create({ telegramId: telegramId, username: username });
+        }
+        await ctx.reply(`Welcome to the Quiz world!`);
+        await sendCategory(ctx);
+    } catch (error) {
+        console.log("Error starting the Quiz:", error);
     }
-    await ctx.reply(`Welcome to the Quiz world!`);
-    await sendCategory(ctx);
 });
 
-
-
 async function sendCategory(ctx) {
-    const categories = await Category.find();
+    try {
+        const categories = await Category.find();
 
-    const categoryArray = categories.map((category) => ({
-        text: category.categoryName,
-        callback_data: JSON.stringify({ seletedCategoryId: category._id }),
-        
-    }))
+        const categoryArray = categories.map((category) => ({
+            text: category.categoryName,
+            callback_data: JSON.stringify({ seletedCategoryId: category._id }),
+        }));
 
-    const keyboard = {
-        reply_markup: {
-            inline_keyboard: [categoryArray]
-        },
-    };
+        const keyboard = {
+            reply_markup: {
+                inline_keyboard: [categoryArray],
+            },
+        };
 
-    await ctx.reply("Please select a category and click on it:", keyboard);
-
-
+        await ctx.reply("Please select a category and click on it:", keyboard);
+    } catch (error) {
+        console.log("Error sending categories:", error);
+    }
 }
 
 async function sendParagraph(ctx, paragraphIdsArr) {
+    try {
+        const randomIndex = Math.floor(Math.random() * paragraphIdsArr.length);
+        // console.log(randomIndex);
 
-    const randomIndex = Math.floor(Math.random() * paragraphIdsArr.length);
-    // console.log(randomIndex);
+        const paragraph = await Paragraph.findById(paragraphIdsArr[randomIndex]);
+        // console.log(paragraph);
 
-    const paragraph = await Paragraph.findById(paragraphIdsArr[randomIndex]);
-    // console.log(paragraph);
+        await ctx.reply("Please Read the Paragraph carefully Before Starting!");
 
-    
+        await ctx.reply(paragraph.paragraphData);
 
-    await ctx.reply("Please Read the Paragraph carefully Before Starting!");
+        // console.log(paragraph._id);
 
-    await ctx.reply(paragraph.paragraphData);
+        const startKeyboard = {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {
+                            text: "Start Quiz",
+                            callback_data: JSON.stringify({
+                                seletedParagraphId: paragraph._id,
+                            }),
+                        },
+                    ],
+                ],
+            },
+        };
 
-    // console.log(paragraph._id);
-
-
-    const startKeyboard = {
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: 'Start Quiz', callback_data: JSON.stringify({ seletedParagraphId: paragraph._id }) }]
-            ]
-        }
-    };
-
-    await ctx.reply("After Reading the Paragraph Press Start to Start the Quiz", startKeyboard);
-
+        await ctx.reply(
+            "After Reading the Paragraph Press Start to Start the Quiz",
+            startKeyboard
+        );
+    } catch (error) {
+        console.log("Error sending paragraph:", error);
+    }
 }
-
 
 async function sendQuestion(ctx, questionIdsArr) {
-
-
-    console.log(questionIdsArr);
-
-    let user = await User.findOne({ telegramId: ctx.from.id });
-
-    let questionCurrentIndex = user.currentQuesionIndex;
-
-    await User.findOneAndUpdate(
-        { telegramId: ctx.from.id },
-        { $set: { currentQuestionId: questionIdsArr[questionCurrentIndex] } },
-        { upsert: true }
-    );
-
-    // console.log("Current Question Index and id updated:")
-    
-    const question = await Question.findById(questionIdsArr[questionCurrentIndex]);
-
-    // console.log(question);
-
-
-    const optionKeyboard = {
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: question.allOptions[0], callback_data: JSON.stringify({selectedOption: question.allOptions[0] }) }],
-                [{ text: question.allOptions[1], callback_data: JSON.stringify({selectedOption: question.allOptions[1] }) }],
-                [{ text: question.allOptions[2], callback_data: JSON.stringify({selectedOption: question.allOptions[2] }) }],
-                [{ text: question.allOptions[3], callback_data: JSON.stringify({selectedOption: question.allOptions[3] }) }],
-            ],
-        },
-    };
-
-
-    await ctx.reply(question.questionData, optionKeyboard);
-
-
-
-}
-
-
-bot.on("callback_query", async (ctx) => {
-    const callbackData = ctx.callbackQuery.data;
-
-    console.log("Received callback data:", callbackData);
-
-    let decodeData;
-
     try {
-        decodeData = JSON.parse(callbackData);
-
-    } catch (error) {
-        console.error("Error parsing callback data:", error);
-        await ctx.reply("Invalid callback data format, Please try again!");
-        return;
-
-    }
-
-    if (decodeData.seletedCategoryId) {
-
-        let selectedCategoryId = decodeData.seletedCategoryId;
-
-        const selectedCategory = await Category.findById(selectedCategoryId);
-
-        // console.log("Selected Category:", selectedCategory);
-
-        const paragraphIdsArr = selectedCategory.paragraphIds;
-
-        await User.findOneAndUpdate(
-            { telegramId: ctx.from.id },
-            { $set: { selectedCategoryId: selectedCategory._id } },
-            { upsert: true }
-        );
-        
-
-        await sendParagraph(ctx, paragraphIdsArr);
-
-
-
-    } else if (decodeData.seletedParagraphId) {
-
-        let selectedParagraphId = decodeData.seletedParagraphId;
-
-        await User.findOneAndUpdate(
-            { telegramId: ctx.from.id },
-            { $set: { selectedParagraphId: selectedParagraphId } },
-            { upsert: true }
-        );
-
-        const selectedParagraph = await Paragraph.findById(selectedParagraphId);
-        // console.log("Selected Paragraph:", selectedParagraph);
-
-        const questionIdsArr = selectedParagraph.questionIds;
-        // console.log(questionIdsArr);
-
-
-        await sendQuestion(ctx, questionIdsArr);
-    } else if (decodeData.selectedOption) {
-
-        let selectedOption = decodeData.selectedOption;
-
+        console.log(questionIdsArr);
 
         let user = await User.findOne({ telegramId: ctx.from.id });
 
-
-        let currentQuestionId = user.currentQuestionId;
-
-        const question = await Question.findById(currentQuestionId);
-
-        if (selectedOption === question.correctAnswer) {
-            await User.findOneAndUpdate(
-                { telegramId: ctx.from.id },
-                { $inc: { correctAnswerCount: 1 } },
-                { upsert: true }
-            );
-
-            await ctx.reply("Wow ! Correct Answer!");
-
-        } else {
-            await User.findOneAndUpdate(
-                { telegramId: ctx.from.id },
-                { $inc: { wrongAnswerCount: 1 } },
-                { upsert: true }
-            );
-
-            await ctx.reply("Oh No ! Wrong Answer!");
-        }
-
+        let questionCurrentIndex = user.currentQuesionIndex;
 
         await User.findOneAndUpdate(
             { telegramId: ctx.from.id },
-            { $inc: { currentQuesionIndex: 1 } },
+            { $set: { currentQuestionId: questionIdsArr[questionCurrentIndex] } },
             { upsert: true }
         );
 
-        // await User.findOneAndUpdate(
-        //     { telegramId: ctx.from.id },
-        //     { $set: { selectedOption: selectedOption } },
-        //     { upsert: true }
-        // );
+        // console.log("Current Question Index and id updated:")
 
+        const question = await Question.findById(
+            questionIdsArr[questionCurrentIndex]
+        );
 
-        let paragraphId = user.selectedParagraphId;
+        // console.log(question);
 
-        const selectedParagraph = await Paragraph.findById(paragraphId);
+        const optionKeyboard = {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {
+                            text: question.allOptions[0],
+                            callback_data: JSON.stringify({
+                                selectedOption: question.allOptions[0],
+                            }),
+                        },
+                    ],
+                    [
+                        {
+                            text: question.allOptions[1],
+                            callback_data: JSON.stringify({
+                                selectedOption: question.allOptions[1],
+                            }),
+                        },
+                    ],
+                    [
+                        {
+                            text: question.allOptions[2],
+                            callback_data: JSON.stringify({
+                                selectedOption: question.allOptions[2],
+                            }),
+                        },
+                    ],
+                    [
+                        {
+                            text: question.allOptions[3],
+                            callback_data: JSON.stringify({
+                                selectedOption: question.allOptions[3],
+                            }),
+                        },
+                    ],
+                ],
+            },
+        };
 
-        const questionIdsArr = selectedParagraph.questionIds;
+        await ctx.reply(question.questionData, optionKeyboard);
+    } catch (error) {
+        console.log("Error sending question:", error);
+    }
+}
 
-        user = await User.findOne({ telegramId: ctx.from.id });
+bot.on("callback_query", async (ctx) => {
+    try {
+        const callbackData = ctx.callbackQuery.data;
 
-        if (user.currentQuesionIndex < questionIdsArr.length) {
-            await ctx.reply("Next Question");
+        console.log("Received callback data:", callbackData);
+
+        let decodeData;
+
+        try {
+            decodeData = JSON.parse(callbackData);
+        } catch (error) {
+            console.error("Error parsing callback data:", error);
+            return;
+        }
+
+        if (decodeData.seletedCategoryId) {
+            let selectedCategoryId = decodeData.seletedCategoryId;
+
+            const selectedCategory = await Category.findById(selectedCategoryId);
+
+            // console.log("Selected Category:", selectedCategory);
+
+            const paragraphIdsArr = selectedCategory.paragraphIds;
+
+            await User.findOneAndUpdate(
+                { telegramId: ctx.from.id },
+                { $set: { selectedCategoryId: selectedCategory._id } },
+                { upsert: true }
+            );
+
+            await sendParagraph(ctx, paragraphIdsArr);
+
+        } else if (decodeData.seletedParagraphId) {
+            let selectedParagraphId = decodeData.seletedParagraphId;
+
+            await User.findOneAndUpdate(
+                { telegramId: ctx.from.id },
+                { $set: { selectedParagraphId: selectedParagraphId } },
+                { upsert: true }
+            );
+
+            const selectedParagraph = await Paragraph.findById(selectedParagraphId);
+            // console.log("Selected Paragraph:", selectedParagraph);
+
+            const questionIdsArr = selectedParagraph.questionIds;
+            // console.log(questionIdsArr);
+
             await sendQuestion(ctx, questionIdsArr);
+        } else if (decodeData.selectedOption) {
+            let selectedOption = decodeData.selectedOption;
+
+            let user = await User.findOne({ telegramId: ctx.from.id });
+
+            let currentQuestionId = user.currentQuestionId;
+
+            const question = await Question.findById(currentQuestionId);
+
+            if (selectedOption === question.correctAnswer) {
+                await User.findOneAndUpdate(
+                    { telegramId: ctx.from.id },
+                    { $inc: { correctAnswerCount: 1 } },
+                    { upsert: true }
+                );
+
+                await ctx.reply("Wow ! Correct Answer!");
+            } else {
+                await User.findOneAndUpdate(
+                    { telegramId: ctx.from.id },
+                    { $inc: { wrongAnswerCount: 1 } },
+                    { upsert: true }
+                );
+
+                await ctx.reply("Oh No ! Wrong Answer!");
+            }
+
+            await User.findOneAndUpdate(
+                { telegramId: ctx.from.id },
+                { $inc: { currentQuesionIndex: 1 } },
+                { upsert: true }
+            );
+
+            let paragraphId = user.selectedParagraphId;
+
+            const selectedParagraph = await Paragraph.findById(paragraphId);
+
+            const questionIdsArr = selectedParagraph.questionIds;
+
+            user = await User.findOne({ telegramId: ctx.from.id });
+
+            if (user.currentQuesionIndex < questionIdsArr.length) {
+                await ctx.reply("Next Question");
+                await sendQuestion(ctx, questionIdsArr);
+            } else {
+
+                await ctx.reply(`Congratulations! You have completed the Quiz.
+                Correct Answers: ${user.correctAnswerCount}
+                Wrong Answers: ${user.wrongAnswerCount}
+            You got ${user.correctAnswerCount} out of ${questionIdsArr.length} questions correctly!`);
+
+
+                await ctx.reply("For Restarting the Quiz please click on /startquiz");
+            }
+
+            console.log("Completed Question:");
         } else {
-            await ctx.reply("You have completed the quiz!");
-            await ctx.reply("Please check your results below:");
-
-            let correctAnswerCount = user.correctAnswerCount;
-            let wrongAnswerCount = user.wrongAnswerCount;
-
-            await ctx.reply(`Correct Answers: ${correctAnswerCount}`);
-            await ctx.reply(`Wrong Answers: ${wrongAnswerCount}`);
-            await ctx.reply(`You got ${correctAnswerCount} out of ${questionIdsArr.length} questions correctly!`);
-
-            await ctx.reply("For Restarting the Quiz please click on /startquiz");
-
-        }   
-
-
-        console.log("Completed Question:");
-        
-
-
+            console.log("Unknown callback data:", callbackData);
+        }
+    } catch (error) {
+        console.log("Error processing callback query:", error);
     }
 });
 
 // ---------------------Telegram UI part-------------------//
 
-
-
 // -------------------add quiz data in DB------------------
 
 const insertTechnologyQuizData = async () => {
     try {
-        // Insert Questions
         const question1 = await Question.create({
             questionData: "What does technology primarily aim to achieve?",
             allOptions: [
@@ -323,14 +341,12 @@ const insertTechnologyQuizData = async () => {
             correctAnswer: "Communication",
         });
 
-        // Insert Paragraph
         const paragraph = await Paragraph.create({
             paragraphData:
                 "Technology is a driving force behind the rapid progress of modern society. It focuses on enhancing human life by creating innovative solutions to everyday problems. From smartphones to smart cities, technology has significantly transformed how we communicate, work, and live. Modern tools such as artificial intelligence and automation have revolutionized industries, enabling faster and more efficient processes. Among its many impacts, technology has bridged gaps in communication, making the world more interconnected than ever before.",
             questionIds: [question1._id, question2._id, question3._id],
         });
 
-        // Insert Category
         const category = await Category.create({
             categoryName: "Technology",
             paragraphIds: [paragraph._id],
@@ -351,7 +367,6 @@ const insertTechnologyQuizData = async () => {
 
 const addMoreToTechnologyCategory = async () => {
     try {
-        // Step 1: Create New Questions
         const question1 = await Question.create({
             questionData: "What is a key benefit of automation in technology?",
             allOptions: [
@@ -385,18 +400,16 @@ const addMoreToTechnologyCategory = async () => {
             correctAnswer: "Protecting digital information",
         });
 
-        // Step 2: Create a New Paragraph
         const paragraph = await Paragraph.create({
             paragraphData:
                 "Modern technology has introduced automation, which simplifies repetitive tasks and improves efficiency in various industries. Cloud computing has revolutionized data storage and sharing, making information easily accessible globally. However, with these advancements comes the need for cybersecurity, which aims to protect digital information from theft and misuse. As technology evolves, it continues to shape how we work, live, and secure our data.",
             questionIds: [question1._id, question2._id, question3._id],
         });
 
-        // Step 3: Update the Existing Category
         const technologyCategory = await Category.findOneAndUpdate(
-            { categoryName: "Technology" }, // Find the category
-            { $push: { paragraphIds: paragraph._id } }, // Add the new paragraph ID
-            { new: true } // Return the updated category
+            { categoryName: "Technology" },
+            { $push: { paragraphIds: paragraph._id } },
+            { new: true }
         );
 
         console.log("New paragraph and questions added successfully!");
@@ -414,7 +427,6 @@ const addMoreToTechnologyCategory = async () => {
 
 const insertHistoryQuizData = async () => {
     try {
-        // Insert Questions
         const question1 = await Question.create({
             questionData: "What does studying history help us understand?",
             allOptions: [
@@ -448,14 +460,12 @@ const insertHistoryQuizData = async () => {
             correctAnswer: "To avoid repeating past mistakes",
         });
 
-        // Insert Paragraph
         const paragraph = await Paragraph.create({
             paragraphData:
                 "History is the study of human actions, societies, and events over time. It offers a window into how different civilizations thrived, adapted, and overcame challenges. By studying history, we gain valuable insights into human behavior and societal changes. This knowledge allows us to understand the complexities of the present by connecting it with the past. History emphasizes the importance of learning from earlier mistakes to avoid repeating them. It also celebrates the achievements of diverse cultures, enabling us to appreciate our shared heritage and the events that shaped our world today.",
             questionIds: [question1._id, question2._id, question3._id],
         });
 
-        // Insert Category
         const category = await Category.create({
             categoryName: "History",
             paragraphIds: [paragraph._id],
@@ -476,7 +486,6 @@ const insertHistoryQuizData = async () => {
 
 const addMoreToHistoryCategory = async () => {
     try {
-        // Step 1: Create New Questions
         const question1 = await Question.create({
             questionData: "What major benefit does studying history provide?",
             allOptions: [
@@ -510,18 +519,16 @@ const addMoreToHistoryCategory = async () => {
             correctAnswer: "To learn from past mistakes",
         });
 
-        // Step 2: Create a New Paragraph
         const paragraph = await Paragraph.create({
             paragraphData:
                 "History is a vital field that explores the evolution of human societies, cultures, and civilizations. It focuses on analyzing past conflicts, achievements, and decisions to derive meaningful lessons for the future. By studying history, we gain an understanding of societal changes and the factors that have shaped our world. This knowledge helps us learn from past mistakes, appreciate cultural diversity, and make informed decisions that guide humanity forward.",
             questionIds: [question1._id, question2._id, question3._id],
         });
 
-        // Step 3: Update the Existing History Category
         const historyCategory = await Category.findOneAndUpdate(
-            { categoryName: "History" }, // Find the category by name
-            { $push: { paragraphIds: paragraph._id } }, // Add the new paragraph ID to the array
-            { new: true } // Return the updated document
+            { categoryName: "History" },
+            { $push: { paragraphIds: paragraph._id } },
+            { new: true }
         );
 
         console.log(
@@ -540,7 +547,6 @@ const addMoreToHistoryCategory = async () => {
 // addMoreToHistoryCategory();
 
 // ----------------add quiz data in DB--------------------
-
 
 // Enable graceful stop
 process.once("SIGINT", () => bot.stop("SIGINT"));
