@@ -30,12 +30,15 @@ const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 bot.start(async (ctx) => {
     try {
-        await ctx.reply(`Hello ${ctx.from.first_name} ${ctx.from.last_name}!`);
+        await ctx.reply(`Hello ${ctx.from.first_name}!`);
         await ctx.reply(`Plese Enter or Press /startquiz to start the quiz!`);
     } catch (error) {
         console.log("Error starting the bot:", error);
+        await ctx.reply("An error occurred while starting the bot. Please try again later.");
+        bot.stop("SIGTERM");
     }
 });
+
 
 bot.command("startquiz", async (ctx) => {
     try {
@@ -61,6 +64,8 @@ bot.command("startquiz", async (ctx) => {
         await sendCategory(ctx);
     } catch (error) {
         console.log("Error starting the Quiz:", error);
+        await ctx.reply("An error occurred while starting the quiz. Please try again later.");
+        bot.stop("SIGTERM");
     }
 });
 
@@ -82,6 +87,8 @@ async function sendCategory(ctx) {
         await ctx.reply("Please select a category and click on it:", keyboard);
     } catch (error) {
         console.log("Error sending categories:", error);
+        await ctx.reply("An error occurred while fetching categories. Please try again later.");
+        bot.stop("SIGTERM");
     }
 }
 
@@ -120,6 +127,8 @@ async function sendParagraph(ctx, paragraphIdsArr) {
         );
     } catch (error) {
         console.log("Error sending paragraph:", error);
+        await ctx.reply("An error occurred while fetching the paragraph. Please try again later.");
+        bot.stop("SIGTERM");
     }
 }
 
@@ -151,7 +160,7 @@ async function sendQuestion(ctx, questionIdsArr) {
                         {
                             text: question.allOptions[0],
                             callback_data: JSON.stringify({
-                                selectedOption: question.allOptions[0],
+                                selectedOption: "A",
                             }),
                         },
                     ],
@@ -159,7 +168,7 @@ async function sendQuestion(ctx, questionIdsArr) {
                         {
                             text: question.allOptions[1],
                             callback_data: JSON.stringify({
-                                selectedOption: question.allOptions[1],
+                                selectedOption: "B",
                             }),
                         },
                     ],
@@ -167,7 +176,7 @@ async function sendQuestion(ctx, questionIdsArr) {
                         {
                             text: question.allOptions[2],
                             callback_data: JSON.stringify({
-                                selectedOption: question.allOptions[2],
+                                selectedOption: "C",
                             }),
                         },
                     ],
@@ -175,7 +184,7 @@ async function sendQuestion(ctx, questionIdsArr) {
                         {
                             text: question.allOptions[3],
                             callback_data: JSON.stringify({
-                                selectedOption: question.allOptions[3],
+                                selectedOption: "D",
                             }),
                         },
                     ],
@@ -183,9 +192,11 @@ async function sendQuestion(ctx, questionIdsArr) {
             },
         };
 
-        await ctx.reply(question.questionData, optionKeyboard);
+        await ctx.reply(`${questionCurrentIndex + 1}.  ${question.questionData}`, optionKeyboard);
     } catch (error) {
         console.log("Error sending question:", error);
+        await ctx.reply("An error occurred while fetching the question. Please try again later.");
+        bot.stop("SIGTERM");
     }
 }
 
@@ -298,7 +309,7 @@ bot.on("callback_query", async (ctx) => {
                         ],
                     },
                 };
-        
+
                 await ctx.reply(
                     "Click on Next Question to move to the next question. \nClick on Select Another Category to start a new Quiz.",
                     nextKeyboard
@@ -309,7 +320,7 @@ bot.on("callback_query", async (ctx) => {
                 // await sendQuestion(ctx, questionIdsArr);
             } else {
 
-                await ctx.reply(`Congratulations! You have completed the Quiz. \nCorrect Answers: ${user.correctAnswerCount} \nWrong Answers: ${user.wrongAnswerCount} \nYou got ${user.correctAnswerCount} out of ${questionIdsArr.length} questions correctly!`);
+                await ctx.reply(`Congratulations! 🎊🎊🎉  You have completed the Quiz. \nCorrect Answers: ${user.correctAnswerCount} \nWrong Answers: ${user.wrongAnswerCount} \nYou got ${user.correctAnswerCount} out of ${questionIdsArr.length} questions correctly!`);
 
 
                 await ctx.reply("Click on /startquiz for start a new Quiz.");
@@ -325,7 +336,7 @@ bot.on("callback_query", async (ctx) => {
             const questionIdsArr = selectedParagraph.questionIds;
 
             await sendQuestion(ctx, questionIdsArr);
-            
+
         } else if (decodeData.action === "selectCategory") {
             await User.findOneAndUpdate(
                 { telegramId: ctx.from.id },
@@ -343,6 +354,8 @@ bot.on("callback_query", async (ctx) => {
         }
     } catch (error) {
         console.log("Error processing callback query:", error);
+        await ctx.reply("An error occurred while processing your request. Please try again later.");
+        bot.stop("SIGTERM");
     }
 });
 
@@ -350,248 +363,1181 @@ bot.on("callback_query", async (ctx) => {
 
 // -------------------add quiz data in DB------------------
 
-const insertTechnologyQuizData = async () => {
+const insertNatureQuizData = async () => {
     try {
+        // Step 1: Create Questions
         const question1 = await Question.create({
-            questionData: "What does technology primarily aim to achieve?",
+            questionData: "What is one of the key benefits of nature?",
             allOptions: [
-                "Enhance human life",
-                "Preserve ancient traditions",
-                "Predict natural disasters",
-                "Study the past",
+                "(A). Providing oxygen",
+                "(B). Enhancing technology",
+                "(C). Building infrastructure",
+                "(D). Advancing medicine",
             ],
-            correctAnswer: "Enhance human life",
+            correctAnswer: "A",
         });
 
         const question2 = await Question.create({
-            questionData: "What is one of the key tools of modern technology?",
+            questionData: "How does nature influence mental health?",
             allOptions: [
-                "Artificial intelligence",
-                "Historical records",
-                "Human intuition",
-                "Cultural traditions",
+                "(A). Increases stress levels",
+                "(B). Reduces stress and improves mood",
+                "(C). Causes distraction",
+                "(D). Promotes overworking",
             ],
-            correctAnswer: "Artificial intelligence",
+            correctAnswer: "B",
         });
 
         const question3 = await Question.create({
-            questionData: "Which sector has been greatly transformed by technology?",
+            questionData: "Which natural resource is essential for life?",
             allOptions: [
-                "Communication",
-                "Archaeology",
-                "Folklore studies",
-                "Linguistics",
+                "(A). Plastic",
+                "(B). Water",
+                "(C). Cement",
+                "(D). Glass",
             ],
-            correctAnswer: "Communication",
+            correctAnswer: "B",
         });
 
+        const question4 = await Question.create({
+            questionData: "What do forests help regulate?",
+            allOptions: [
+                "(A). Global warming",
+                "(B). The Earth's climate",
+                "(C). Technological advancements",
+                "(D). Urban development",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question5 = await Question.create({
+            questionData: "What role do bees play in nature?",
+            allOptions: [
+                "(A). Transporting seeds",
+                "(B). Pollination of plants",
+                "(C). Consuming flowers",
+                "(D). Producing plastic",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question6 = await Question.create({
+            questionData: "What is biodiversity?",
+            allOptions: [
+                "(A). The variety of ecosystems, species, and genes",
+                "(B). A single species in an area",
+                "(C). The lack of diversity in nature",
+                "(D). Human-made landscapes",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question7 = await Question.create({
+            questionData: "How does deforestation impact the environment?",
+            allOptions: [
+                "(A). Enhances soil fertility",
+                "(B). Disrupts ecosystems",
+                "(C). Increases oxygen levels",
+                "(D). Reduces biodiversity",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question8 = await Question.create({
+            questionData: "Which activity helps preserve nature?",
+            allOptions: [
+                "(A). Recycling waste",
+                "(B). Burning fossil fuels",
+                "(C). Excessive logging",
+                "(D). Building skyscrapers",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question9 = await Question.create({
+            questionData: "Why is protecting nature important?",
+            allOptions: [
+                "(A). For aesthetic value only",
+                "(B). To ensure survival and sustainability",
+                "(C). To prioritize urban development",
+                "(D). To maintain human dominance",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question10 = await Question.create({
+            questionData: "What is one way nature inspires humans?",
+            allOptions: [
+                "(A). By creating a sense of isolation",
+                "(B). By inspiring art and innovation",
+                "(C). By promoting destruction",
+                "(D). By limiting creativity",
+            ],
+            correctAnswer: "B",
+        });
+
+        // Step 2: Create a Paragraph
         const paragraph = await Paragraph.create({
             paragraphData:
-                "Technology is a driving force behind the rapid progress of modern society. It focuses on enhancing human life by creating innovative solutions to everyday problems. From smartphones to smart cities, technology has significantly transformed how we communicate, work, and live. Modern tools such as artificial intelligence and automation have revolutionized industries, enabling faster and more efficient processes. Among its many impacts, technology has bridged gaps in communication, making the world more interconnected than ever before.",
-            questionIds: [question1._id, question2._id, question3._id],
+                "Nature is essential to life on Earth, providing oxygen, water, and countless resources vital for survival. It influences mental well-being, helping reduce stress and improve mood. Forests regulate the Earth's climate, while bees play a critical role in pollination, sustaining biodiversity. Protecting nature ensures the survival of ecosystems, preserving the balance necessary for life. Activities like recycling and conservation help safeguard these natural resources. Nature inspires creativity and innovation while reminding humanity of its interconnectedness with the planet.",
+            questionIds: [
+                question1._id,
+                question2._id,
+                question3._id,
+                question4._id,
+                question5._id,
+                question6._id,
+                question7._id,
+                question8._id,
+                question9._id,
+                question10._id,
+            ],
         });
 
+        // Step 3: Create the Category
         const category = await Category.create({
-            categoryName: "Technology",
+            categoryName: "Nature",
             paragraphIds: [paragraph._id],
         });
 
-        console.log("Data inserted successfully!");
-        console.log({
-            category,
-            paragraph,
-            questions: [question1, question2, question3],
-        });
+        console.log("Nature quiz data inserted successfully!");
     } catch (error) {
-        console.error("Error inserting data:", error);
+        console.error("Error inserting Nature quiz data:", error);
     }
 };
 
-// insertTechnologyQuizData()
+// insertNatureQuizData();
 
-const addMoreToTechnologyCategory = async () => {
+const addMoreToNatureCategory = async () => {
     try {
+        // Step 1: Create New Questions
         const question1 = await Question.create({
-            questionData: "What is a key benefit of automation in technology?",
+            questionData: "What is the primary role of forests in the water cycle?",
             allOptions: [
-                "Increases efficiency",
-                "Preserves cultural heritage",
-                "Explores outer space",
-                "Enhances artistic creativity",
+                "(A). To block rainfall",
+                "(B). To store and release water",
+                "(C). To increase water pollution",
+                "(D). To dry up rivers",
             ],
-            correctAnswer: "Increases efficiency",
+            correctAnswer: "B",
         });
 
         const question2 = await Question.create({
-            questionData: "Which area is most impacted by cloud computing?",
+            questionData: "Why is soil health important for plants?",
             allOptions: [
-                "Data storage",
-                "Historical research",
-                "Wildlife conservation",
-                "Traditional art forms",
+                "(A). Provides nutrients and support",
+                "(B). Prevents photosynthesis",
+                "(C). Absorbs carbon dioxide",
+                "(D). Increases global warming",
             ],
-            correctAnswer: "Data storage",
+            correctAnswer: "A",
         });
 
         const question3 = await Question.create({
-            questionData: "What is the primary goal of cybersecurity?",
+            questionData: "What is one of the key benefits of wetlands?",
             allOptions: [
-                "Protecting digital information",
-                "Developing AI models",
-                "Improving physical health",
-                "Preserving ancient manuscripts",
+                "(A). They act as natural water filters",
+                "(B). They promote soil erosion",
+                "(C). They block rainwater",
+                "(D). They increase water pollution",
             ],
-            correctAnswer: "Protecting digital information",
+            correctAnswer: "A",
         });
 
+        const question4 = await Question.create({
+            questionData: "Which gas is primarily released during deforestation?",
+            allOptions: [
+                "(A). Oxygen",
+                "(B). Carbon dioxide",
+                "(C). Nitrogen",
+                "(D). Methane",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question5 = await Question.create({
+            questionData: "What is the role of trees in air quality?",
+            allOptions: [
+                "(A). They release harmful gases",
+                "(B). They filter pollutants and produce oxygen",
+                "(C). They block sunlight",
+                "(D). They create dust storms",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question6 = await Question.create({
+            questionData: "Why are pollinators important for agriculture?",
+            allOptions: [
+                "(A). They destroy crops",
+                "(B). They help plants reproduce",
+                "(C). They block sunlight",
+                "(D). They promote soil erosion",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question7 = await Question.create({
+            questionData: "How does conserving nature benefit humans?",
+            allOptions: [
+                "(A). It ensures clean air and water",
+                "(B). It decreases biodiversity",
+                "(C). It promotes soil erosion",
+                "(D). It reduces food security",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question8 = await Question.create({
+            questionData: "What is the primary source of energy for life on Earth?",
+            allOptions: [
+                "(A). Wind",
+                "(B). Fossil fuels",
+                "(C). The Sun",
+                "(D). The Moon",
+            ],
+            correctAnswer: "C",
+        });
+
+        const question9 = await Question.create({
+            questionData: "Which activity harms marine ecosystems?",
+            allOptions: [
+                "(A). Overfishing",
+                "(B). Coral reef protection",
+                "(C). Sustainable fishing",
+                "(D). Marine conservation",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question10 = await Question.create({
+            questionData: "Why is planting trees vital for urban areas?",
+            allOptions: [
+                "(A). It increases air pollution",
+                "(B). It reduces urban heat and improves air quality",
+                "(C). It blocks rainfall",
+                "(D). It causes water scarcity",
+            ],
+            correctAnswer: "B",
+        });
+
+        // Step 2: Create a Paragraph
         const paragraph = await Paragraph.create({
             paragraphData:
-                "Modern technology has introduced automation, which simplifies repetitive tasks and improves efficiency in various industries. Cloud computing has revolutionized data storage and sharing, making information easily accessible globally. However, with these advancements comes the need for cybersecurity, which aims to protect digital information from theft and misuse. As technology evolves, it continues to shape how we work, live, and secure our data.",
-            questionIds: [question1._id, question2._id, question3._id],
+                "Nature provides countless resources and services vital to life, including clean air, water, and fertile soil. Forests play a crucial role in the water cycle by storing and releasing water, while wetlands act as natural water filters. Pollinators like bees sustain agriculture by helping plants reproduce. Conserving nature ensures clean air and water, supports biodiversity, and protects ecosystems essential for life. Planting trees in urban areas can combat heat and improve air quality, emphasizing the need for balance between human development and natural preservation.",
+            questionIds: [
+                question1._id,
+                question2._id,
+                question3._id,
+                question4._id,
+                question5._id,
+                question6._id,
+                question7._id,
+                question8._id,
+                question9._id,
+                question10._id,
+            ],
         });
 
-        const technologyCategory = await Category.findOneAndUpdate(
-            { categoryName: "Technology" },
-            { $push: { paragraphIds: paragraph._id } },
-            { new: true }
+        // Step 3: Update the Existing Nature Category
+        const natureCategory = await Category.findOneAndUpdate(
+            { categoryName: "Nature" }, // Find the "Nature" category
+            { $push: { paragraphIds: paragraph._id } }, // Add the new paragraph ID
+            { new: true } // Return the updated category
         );
 
         console.log("New paragraph and questions added successfully!");
-        console.log({
-            technologyCategory,
-            paragraph,
-            questions: [question1, question2, question3],
-        });
     } catch (error) {
-        console.error("Error adding data:", error);
+        console.error("Error adding data to Nature category:", error);
     }
 };
 
-// addMoreToTechnologyCategory()
+// addMoreToNatureCategory();
 
-const insertHistoryQuizData = async () => {
+const addScienceQuizData = async () => {
     try {
+        // Step 1: Create Questions
         const question1 = await Question.create({
-            questionData: "What does studying history help us understand?",
+            questionData: "What is the smallest unit of matter?",
             allOptions: [
-                "Human behavior and societal changes",
-                "Modern technology advancements",
-                "Future predictions",
-                "Global economic systems",
+                "(A). Atom",
+                "(B). Molecule",
+                "(C). Cell",
+                "(D). Proton",
             ],
-            correctAnswer: "Human behavior and societal changes",
+            correctAnswer: "A",
         });
 
         const question2 = await Question.create({
-            questionData: "Which of these is a key focus of history?",
+            questionData: "What is the primary function of the heart in humans?",
             allOptions: [
-                "Exploring ancient civilizations",
-                "Creating cultural trends",
-                "Advancing scientific knowledge",
-                "Building economic strategies",
+                "(A). Produces hormones",
+                "(B). Pumps blood",
+                "(C). Aids digestion",
+                "(D). Filters oxygen",
             ],
-            correctAnswer: "Exploring ancient civilizations",
+            correctAnswer: "B",
         });
 
         const question3 = await Question.create({
-            questionData: "Why is it important to learn about history?",
+            questionData: "Which planet is known as the 'Red Planet'?",
             allOptions: [
-                "To avoid repeating past mistakes",
-                "To focus on technological development",
-                "To predict the future accurately",
-                "To prioritize economic growth",
+                "(A). Venus",
+                "(B). Mars",
+                "(C). Jupiter",
+                "(D). Saturn",
             ],
-            correctAnswer: "To avoid repeating past mistakes",
+            correctAnswer: "B",
         });
 
+        const question4 = await Question.create({
+            questionData: "What is the process of converting sunlight into chemical energy called?",
+            allOptions: [
+                "(A). Respiration",
+                "(B). Photosynthesis",
+                "(C). Transpiration",
+                "(D). Fermentation",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question5 = await Question.create({
+            questionData: "What is the formula for water?",
+            allOptions: [
+                "(A). H2O",
+                "(B). CO2",
+                "(C). O2",
+                "(D). NaCl",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question6 = await Question.create({
+            questionData: "What is the speed of light in a vacuum?",
+            allOptions: [
+                "(A). 3 x 10^8 m/s",
+                "(B). 1.5 x 10^6 m/s",
+                "(C). 9 x 10^9 m/s",
+                "(D). 2 x 10^7 m/s",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question7 = await Question.create({
+            questionData: "Which gas do plants primarily absorb for photosynthesis?",
+            allOptions: [
+                "(A). Oxygen",
+                "(B). Carbon dioxide",
+                "(C). Nitrogen",
+                "(D). Helium",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question8 = await Question.create({
+            questionData: "What is Newton's First Law of Motion also called?",
+            allOptions: [
+                "(A). Law of Inertia",
+                "(B). Law of Gravity",
+                "(C). Conservation of Energy",
+                "(D). Principle of Relativity",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question9 = await Question.create({
+            questionData: "What is the chemical symbol for gold?",
+            allOptions: [
+                "(A). Gd",
+                "(B). Au",
+                "(C). Ag",
+                "(D). Go",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question10 = await Question.create({
+            questionData: "What is the boiling point of water at sea level?",
+            allOptions: [
+                "(A). 100°C",
+                "(B). 50°C",
+                "(C). 212°C",
+                "(D). 150°C",
+            ],
+            correctAnswer: "A",
+        });
+
+        // Step 2: Create a Paragraph
         const paragraph = await Paragraph.create({
             paragraphData:
-                "History is the study of human actions, societies, and events over time. It offers a window into how different civilizations thrived, adapted, and overcame challenges. By studying history, we gain valuable insights into human behavior and societal changes. This knowledge allows us to understand the complexities of the present by connecting it with the past. History emphasizes the importance of learning from earlier mistakes to avoid repeating them. It also celebrates the achievements of diverse cultures, enabling us to appreciate our shared heritage and the events that shaped our world today.",
-            questionIds: [question1._id, question2._id, question3._id],
+                "Science explores the laws and principles that govern the natural world. Atoms, the building blocks of matter, form molecules and larger structures. Photosynthesis, essential for life, allows plants to convert sunlight into energy. The heart circulates blood, ensuring oxygen and nutrients reach cells. Newton’s laws describe motion, while discoveries like the speed of light and properties of elements like gold have shaped our understanding of the universe. Science connects humanity to its environment, revealing the wonders of the cosmos and the intricacies of life on Earth.",
+            questionIds: [
+                question1._id,
+                question2._id,
+                question3._id,
+                question4._id,
+                question5._id,
+                question6._id,
+                question7._id,
+                question8._id,
+                question9._id,
+                question10._id,
+            ],
         });
 
+        // Step 3: Create the Science Category
         const category = await Category.create({
+            categoryName: "Science",
+            paragraphIds: [paragraph._id],
+        });
+
+        console.log("Science quiz data inserted successfully!");
+    } catch (error) {
+        console.error("Error inserting Science quiz data:", error);
+    }
+};
+
+// addScienceQuizData();
+
+const addMoreToScienceCategory = async () => {
+    try {
+        // Step 1: Create New Questions
+        const question1 = await Question.create({
+            questionData: "What is the powerhouse of the cell?",
+            allOptions: [
+                "(A). Nucleus",
+                "(B). Mitochondria",
+                "(C). Ribosomes",
+                "(D). Endoplasmic Reticulum",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question2 = await Question.create({
+            questionData: "Which element is essential for the production of thyroid hormones?",
+            allOptions: [
+                "(A). Iron",
+                "(B). Iodine",
+                "(C). Calcium",
+                "(D). Sodium",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question3 = await Question.create({
+            questionData: "What type of bond holds the two strands of a DNA molecule together?",
+            allOptions: [
+                "(A). Ionic bond",
+                "(B). Hydrogen bond",
+                "(C). Covalent bond",
+                "(D). Metallic bond",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question4 = await Question.create({
+            questionData: "What is the primary function of the digestive system?",
+            allOptions: [
+                "(A). Absorb nutrients and expel waste",
+                "(B). Produce hormones",
+                "(C). Circulate blood",
+                "(D). Filter toxins",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question5 = await Question.create({
+            questionData: "Which gas is produced as a byproduct of respiration?",
+            allOptions: [
+                "(A). Oxygen",
+                "(B). Carbon dioxide",
+                "(C). Nitrogen",
+                "(D). Hydrogen",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question6 = await Question.create({
+            questionData: "Which part of the plant is responsible for photosynthesis?",
+            allOptions: [
+                "(A). Roots",
+                "(B). Stems",
+                "(C). Leaves",
+                "(D). Flowers",
+            ],
+            correctAnswer: "C",
+        });
+
+        const question7 = await Question.create({
+            questionData: "What is the chemical process by which plants convert sunlight into food?",
+            allOptions: [
+                "(A). Respiration",
+                "(B). Photosynthesis",
+                "(C). Digestion",
+                "(D). Transpiration",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question8 = await Question.create({
+            questionData: "What does DNA stand for?",
+            allOptions: [
+                "(A). Deoxyribonucleic Acid",
+                "(B). Deoxyribonitric Acid",
+                "(C). Dioxyribonucleic Acid",
+                "(D). Deoxyribonic Acid",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question9 = await Question.create({
+            questionData: "What is the largest organ in the human body?",
+            allOptions: [
+                "(A). Brain",
+                "(B). Heart",
+                "(C). Skin",
+                "(D). Liver",
+            ],
+            correctAnswer: "C",
+        });
+
+        const question10 = await Question.create({
+            questionData: "Which gas is responsible for global warming?",
+            allOptions: [
+                "(A). Oxygen",
+                "(B). Carbon dioxide",
+                "(C). Nitrogen",
+                "(D). Helium",
+            ],
+            correctAnswer: "B",
+        });
+
+        // Step 2: Create a New Paragraph
+        const paragraph = await Paragraph.create({
+            paragraphData:
+                "Science plays a crucial role in understanding the world around us. From the microscopic level of cells and DNA to the vast expanse of the universe, scientific principles explain the functions and behaviors of all living and non-living systems. The study of biological processes like photosynthesis and respiration highlights the importance of energy flow in ecosystems. Understanding the complex molecular mechanisms in cells and the production of hormones further reveals the intricacies of life. Science continues to shape our understanding of health, technology, and the environment.",
+            questionIds: [
+                question1._id,
+                question2._id,
+                question3._id,
+                question4._id,
+                question5._id,
+                question6._id,
+                question7._id,
+                question8._id,
+                question9._id,
+                question10._id,
+            ],
+        });
+
+        // Step 3: Update the Existing Science Category
+        const scienceCategory = await Category.findOneAndUpdate(
+            { categoryName: "Science" }, // Find the "Science" category
+            { $push: { paragraphIds: paragraph._id } }, // Add the new paragraph ID
+            { new: true } // Return the updated category
+        );
+
+        console.log("New questions and paragraph added successfully to Science category!");
+    } catch (error) {
+        console.error("Error adding data to Science category:", error);
+    }
+};
+
+// addMoreToScienceCategory();
+
+const createHistoryCategory = async () => {
+    try {
+        // Step 1: Create Questions
+        const question1 = await Question.create({
+            questionData: "Who was the first president of the United States?",
+            allOptions: [
+                "(A). George Washington",
+                "(B). Abraham Lincoln",
+                "(C). Thomas Jefferson",
+                "(D). Theodore Roosevelt",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question2 = await Question.create({
+            questionData: "In which year did World War II end?",
+            allOptions: [
+                "(A). 1945",
+                "(B). 1950",
+                "(C). 1939",
+                "(D). 1960",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question3 = await Question.create({
+            questionData: "Who was the first emperor of China?",
+            allOptions: [
+                "(A). Qin Shi Huang",
+                "(B). Han Wudi",
+                "(C). Cao Cao",
+                "(D). Sun Tzu",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question4 = await Question.create({
+            questionData: "Which ancient civilization built the pyramids?",
+            allOptions: [
+                "(A). Ancient Rome",
+                "(B). Ancient Egypt",
+                "(C). Ancient Greece",
+                "(D). Ancient Mesopotamia",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question5 = await Question.create({
+            questionData: "What was the main cause of the American Civil War?",
+            allOptions: [
+                "(A). Slavery",
+                "(B). Industrialization",
+                "(C). Religion",
+                "(D). Land Disputes",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question6 = await Question.create({
+            questionData: "Who was the leader of the Soviet Union during World War II?",
+            allOptions: [
+                "(A). Vladimir Lenin",
+                "(B). Joseph Stalin",
+                "(C). Nikita Khrushchev",
+                "(D). Mikhail Gorbachev",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question7 = await Question.create({
+            questionData: "Which empire was led by Genghis Khan?",
+            allOptions: [
+                "(A). Roman Empire",
+                "(B). Ottoman Empire",
+                "(C). Mongol Empire",
+                "(D). Byzantine Empire",
+            ],
+            correctAnswer: "C",
+        });
+
+        const question8 = await Question.create({
+            questionData: "In which year did the Titanic sink?",
+            allOptions: [
+                "(A). 1912",
+                "(B). 1905",
+                "(C). 1920",
+                "(D). 1898",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question9 = await Question.create({
+            questionData: "What event triggered the start of World War I?",
+            allOptions: [
+                "(A). The assassination of Archduke Franz Ferdinand",
+                "(B). The signing of the Treaty of Versailles",
+                "(C). The invasion of Poland",
+                "(D). The bombing of Pearl Harbor",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question10 = await Question.create({
+            questionData: "Which civilization is known for creating the first written laws?",
+            allOptions: [
+                "(A). Ancient Greece",
+                "(B). Ancient Mesopotamia",
+                "(C). Ancient Egypt",
+                "(D). Ancient India",
+            ],
+            correctAnswer: "B",
+        });
+
+        // Step 2: Create a Paragraph
+        const paragraph = await Paragraph.create({
+            paragraphData:
+                "History is the study of past events, and understanding it helps us comprehend the present. The first president of the United States, George Washington, led the country after it gained independence. Throughout history, pivotal events such as the end of World War II in 1945, the reign of Genghis Khan, and the construction of the Egyptian pyramids have shaped the world as we know it. The causes and consequences of wars, like the American Civil War and World War I, continue to influence modern society. The evolution of civilizations, from the ancient Egyptians to the Mongol Empire, offers valuable lessons for the future.",
+            questionIds: [
+                question1._id,
+                question2._id,
+                question3._id,
+                question4._id,
+                question5._id,
+                question6._id,
+                question7._id,
+                question8._id,
+                question9._id,
+                question10._id,
+            ],
+        });
+
+        // Step 3: Create the History Category
+        const historyCategory = await Category.create({
             categoryName: "History",
             paragraphIds: [paragraph._id],
         });
 
-        console.log("Data inserted successfully!");
-        console.log({
-            category,
-            paragraph,
-            questions: [question1, question2, question3],
-        });
+        console.log("History category created successfully!");
     } catch (error) {
-        console.error("Error inserting data:", error);
+        console.error("Error creating History category:", error);
+    }
+};
+
+// createHistoryCategory();
+
+const insertHistoryQuizData = async () => {
+    try {
+        // Step 1: Create Questions
+        const question1 = await Question.create({
+            questionData: "Who was the first president of the United States?",
+            allOptions: [
+                "(A). George Washington",
+                "(B). Abraham Lincoln",
+                "(C). Thomas Jefferson",
+                "(D). Theodore Roosevelt",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question2 = await Question.create({
+            questionData: "In which year did World War II end?",
+            allOptions: [
+                "(A). 1945",
+                "(B). 1950",
+                "(C). 1939",
+                "(D). 1960",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question3 = await Question.create({
+            questionData: "Who was the first emperor of China?",
+            allOptions: [
+                "(A). Qin Shi Huang",
+                "(B). Han Wudi",
+                "(C). Cao Cao",
+                "(D). Sun Tzu",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question4 = await Question.create({
+            questionData: "Which ancient civilization built the pyramids?",
+            allOptions: [
+                "(A). Ancient Rome",
+                "(B). Ancient Egypt",
+                "(C). Ancient Greece",
+                "(D). Ancient Mesopotamia",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question5 = await Question.create({
+            questionData: "What was the main cause of the American Civil War?",
+            allOptions: [
+                "(A). Slavery",
+                "(B). Industrialization",
+                "(C). Religion",
+                "(D). Land Disputes",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question6 = await Question.create({
+            questionData: "Who was the leader of the Soviet Union during World War II?",
+            allOptions: [
+                "(A). Vladimir Lenin",
+                "(B). Joseph Stalin",
+                "(C). Nikita Khrushchev",
+                "(D). Mikhail Gorbachev",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question7 = await Question.create({
+            questionData: "Which empire was led by Genghis Khan?",
+            allOptions: [
+                "(A). Roman Empire",
+                "(B). Ottoman Empire",
+                "(C). Mongol Empire",
+                "(D). Byzantine Empire",
+            ],
+            correctAnswer: "C",
+        });
+
+        const question8 = await Question.create({
+            questionData: "In which year did the Titanic sink?",
+            allOptions: [
+                "(A). 1912",
+                "(B). 1905",
+                "(C). 1920",
+                "(D). 1898",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question9 = await Question.create({
+            questionData: "What event triggered the start of World War I?",
+            allOptions: [
+                "(A). The assassination of Archduke Franz Ferdinand",
+                "(B). The signing of the Treaty of Versailles",
+                "(C). The invasion of Poland",
+                "(D). The bombing of Pearl Harbor",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question10 = await Question.create({
+            questionData: "Which civilization is known for creating the first written laws?",
+            allOptions: [
+                "(A). Ancient Greece",
+                "(B). Ancient Mesopotamia",
+                "(C). Ancient Egypt",
+                "(D). Ancient India",
+            ],
+            correctAnswer: "B",
+        });
+
+        // Step 2: Create a Paragraph
+        const paragraph = await Paragraph.create({
+            paragraphData:
+                "History is the study of past events, and understanding it helps us comprehend the present. The first president of the United States, George Washington, led the country after it gained independence. Throughout history, pivotal events such as the end of World War II in 1945, the reign of Genghis Khan, and the construction of the Egyptian pyramids have shaped the world as we know it. The causes and consequences of wars, like the American Civil War and World War I, continue to influence modern society. The evolution of civilizations, from the ancient Egyptians to the Mongol Empire, offers valuable lessons for the future.",
+            questionIds: [
+                question1._id,
+                question2._id,
+                question3._id,
+                question4._id,
+                question5._id,
+                question6._id,
+                question7._id,
+                question8._id,
+                question9._id,
+                question10._id,
+            ],
+        });
+
+        // Step 3: Update the History Category
+        const historyCategory = await Category.findOneAndUpdate(
+            { categoryName: "History" }, // Find the "History" category
+            { $push: { paragraphIds: paragraph._id } }, // Add the new paragraph ID
+            { new: true } // Return the updated category
+        );
+
+        console.log("History quiz data inserted successfully!");
+    } catch (error) {
+        console.error("Error inserting History quiz data:", error);
     }
 };
 
 // insertHistoryQuizData();
 
-const addMoreToHistoryCategory = async () => {
+const createTechnologyCategory = async () => {
     try {
+        // Step 1: Create Questions
         const question1 = await Question.create({
-            questionData: "What major benefit does studying history provide?",
+            questionData: "Who is considered the father of computers?",
             allOptions: [
-                "Understanding societal evolution",
-                "Learning advanced technology",
-                "Improving health systems",
-                "Exploring outer space",
+                "(A). Charles Babbage",
+                "(B). Alan Turing",
+                "(C). Bill Gates",
+                "(D). Steve Jobs",
             ],
-            correctAnswer: "Understanding societal evolution",
+            correctAnswer: "A",
         });
 
         const question2 = await Question.create({
-            questionData: "What is one focus area of history?",
+            questionData: "What does HTML stand for?",
             allOptions: [
-                "Analyzing past conflicts",
-                "Predicting weather patterns",
-                "Designing technological solutions",
-                "Developing new medicines",
+                "(A). Hypertext Markup Language",
+                "(B). Hyper Transfer Markup Language",
+                "(C). High Transfer Markup Language",
+                "(D). HyperText Machine Language",
             ],
-            correctAnswer: "Analyzing past conflicts",
+            correctAnswer: "A",
         });
 
         const question3 = await Question.create({
-            questionData: "Why do we study history?",
+            questionData: "Which company developed the first personal computer?",
             allOptions: [
-                "To learn from past mistakes",
-                "To avoid cultural diversity",
-                "To improve athletic performance",
-                "To understand mathematical formulas",
+                "(A). Apple",
+                "(B). IBM",
+                "(C). Microsoft",
+                "(D). HP",
             ],
-            correctAnswer: "To learn from past mistakes",
+            correctAnswer: "B",
         });
 
+        const question4 = await Question.create({
+            questionData: "What is the primary function of an operating system?",
+            allOptions: [
+                "(A). To manage hardware resources",
+                "(B). To browse the internet",
+                "(C). To store data",
+                "(D). To play games",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question5 = await Question.create({
+            questionData: "Which programming language is known as the foundation of modern web development?",
+            allOptions: [
+                "(A). C",
+                "(B). Java",
+                "(C). JavaScript",
+                "(D). Python",
+            ],
+            correctAnswer: "C",
+        });
+
+        const question6 = await Question.create({
+            questionData: "What does the acronym 'AI' stand for?",
+            allOptions: [
+                "(A). Automated Interface",
+                "(B). Artificial Intelligence",
+                "(C). Advanced Integration",
+                "(D). Algorithmic Interpretation",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question7 = await Question.create({
+            questionData: "Which technology is used to make websites interactive?",
+            allOptions: [
+                "(A). HTML",
+                "(B). CSS",
+                "(C). JavaScript",
+                "(D). SQL",
+            ],
+            correctAnswer: "C",
+        });
+
+        const question8 = await Question.create({
+            questionData: "What is cloud computing?",
+            allOptions: [
+                "(A). Storing data on remote servers and accessing it over the internet",
+                "(B). A type of weather forecasting",
+                "(C). A hardware device for computing",
+                "(D). A form of energy-efficient computing",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question9 = await Question.create({
+            questionData: "Which of the following is NOT a type of programming language?",
+            allOptions: [
+                "(A). Python",
+                "(B). HTML",
+                "(C). Ruby",
+                "(D). JavaScript",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question10 = await Question.create({
+            questionData: "Who is the CEO of Tesla and SpaceX?",
+            allOptions: [
+                "(A). Jeff Bezos",
+                "(B). Bill Gates",
+                "(C). Elon Musk",
+                "(D). Steve Jobs",
+            ],
+            correctAnswer: "C",
+        });
+
+        // Step 2: Create a Paragraph
         const paragraph = await Paragraph.create({
             paragraphData:
-                "History is a vital field that explores the evolution of human societies, cultures, and civilizations. It focuses on analyzing past conflicts, achievements, and decisions to derive meaningful lessons for the future. By studying history, we gain an understanding of societal changes and the factors that have shaped our world. This knowledge helps us learn from past mistakes, appreciate cultural diversity, and make informed decisions that guide humanity forward.",
-            questionIds: [question1._id, question2._id, question3._id],
+                "Technology has transformed every aspect of our lives, from the invention of the computer to the development of artificial intelligence. Pioneers like Charles Babbage and Alan Turing laid the groundwork for modern computing. The advent of the personal computer and the internet revolutionized communication and information sharing. Today, technologies like AI and cloud computing continue to drive innovation, enabling new applications and industries. Web development languages like HTML, JavaScript, and CSS are the building blocks of the digital world, shaping everything from websites to mobile apps.",
+            questionIds: [
+                question1._id,
+                question2._id,
+                question3._id,
+                question4._id,
+                question5._id,
+                question6._id,
+                question7._id,
+                question8._id,
+                question9._id,
+                question10._id,
+            ],
         });
 
-        const historyCategory = await Category.findOneAndUpdate(
-            { categoryName: "History" },
-            { $push: { paragraphIds: paragraph._id } },
-            { new: true }
-        );
-
-        console.log(
-            "New paragraph and questions added to the 'History' category successfully!"
-        );
-        console.log({
-            historyCategory,
-            paragraph,
-            questions: [question1, question2, question3],
+        // Step 3: Create the Technology Category
+        const technologyCategory = await Category.create({
+            categoryName: "Technology",
+            paragraphIds: [paragraph._id],
         });
+
+        console.log("Technology category created successfully!");
     } catch (error) {
-        console.error("Error adding data to 'History' category:", error);
+        console.error("Error creating Technology category:", error);
     }
 };
 
-// addMoreToHistoryCategory();
+// createTechnologyCategory();
+
+
+const addMoreDataToTechnologyCategory = async () => {
+    try {
+        // Step 1: Create 10 Additional Questions
+        const question1 = await Question.create({
+            questionData: "Who is considered the father of the World Wide Web?",
+            allOptions: [
+                "(A). Tim Berners-Lee",
+                "(B). Bill Gates",
+                "(C). Steve Jobs",
+                "(D). Mark Zuckerberg",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question2 = await Question.create({
+            questionData: "Which company developed the first smartphone?",
+            allOptions: [
+                "(A). Apple",
+                "(B). IBM",
+                "(C). Nokia",
+                "(D). Samsung",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question3 = await Question.create({
+            questionData: "What is the main function of the 'GPU' in computers?",
+            allOptions: [
+                "(A). Data storage",
+                "(B). Graphics rendering",
+                "(C). Network management",
+                "(D). Power supply",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question4 = await Question.create({
+            questionData: "What does 'URL' stand for?",
+            allOptions: [
+                "(A). Uniform Resource Locator",
+                "(B). Universal Resource Locator",
+                "(C). Universal Retrieval Link",
+                "(D). Uniform Retrieval Link",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question5 = await Question.create({
+            questionData: "Which language is commonly used for building mobile applications for iOS?",
+            allOptions: [
+                "(A). Kotlin",
+                "(B). Swift",
+                "(C). JavaScript",
+                "(D). Ruby",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question6 = await Question.create({
+            questionData: "What is the most popular programming language for web development?",
+            allOptions: [
+                "(A). JavaScript",
+                "(B). Python",
+                "(C). Ruby",
+                "(D). C++",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question7 = await Question.create({
+            questionData: "Which company is known for creating the Android operating system?",
+            allOptions: [
+                "(A). Microsoft",
+                "(B). Apple",
+                "(C). Google",
+                "(D). IBM",
+            ],
+            correctAnswer: "C",
+        });
+
+        const question8 = await Question.create({
+            questionData: "What does the term 'cloud computing' mean?",
+            allOptions: [
+                "(A). Using remote servers to store, manage, and process data",
+                "(B). Computing within the atmosphere",
+                "(C). Using personal devices for computing",
+                "(D). Storing data on a personal hard drive",
+            ],
+            correctAnswer: "A",
+        });
+
+        const question9 = await Question.create({
+            questionData: "Which technology is used to create interactive websites?",
+            allOptions: [
+                "(A). HTML",
+                "(B). JavaScript",
+                "(C). CSS",
+                "(D). Python",
+            ],
+            correctAnswer: "B",
+        });
+
+        const question10 = await Question.create({
+            questionData: "Which of the following is NOT a cloud service provider?",
+            allOptions: [
+                "(A). Amazon Web Services (AWS)",
+                "(B). Google Cloud",
+                "(C). Microsoft Azure",
+                "(D). Adobe Photoshop",
+            ],
+            correctAnswer: "D",
+        });
+
+        // Step 2: Create a New Paragraph for the additional content
+        const additionalParagraph = await Paragraph.create({
+            paragraphData:
+                "The technology sector is full of innovation and progress, from the creation of the World Wide Web by Tim Berners-Lee to the development of smartphones by IBM. Technologies like GPU (Graphics Processing Units) have revolutionized gaming and design. The rise of cloud computing allows businesses and individuals to store and manage their data on remote servers, while the development of mobile apps continues to advance with tools like Swift for iOS. In addition, cloud service providers such as Amazon Web Services (AWS), Google Cloud, and Microsoft Azure provide powerful computing solutions for organizations worldwide.",
+            questionIds: [
+                question1._id,
+                question2._id,
+                question3._id,
+                question4._id,
+                question5._id,
+                question6._id,
+                question7._id,
+                question8._id,
+                question9._id,
+                question10._id,
+            ],
+        });
+
+        // Step 3: Update the Technology Category with the new paragraph
+        const technologyCategory = await Category.findOneAndUpdate(
+            { categoryName: "Technology" }, // Find the "Technology" category
+            { $push: { paragraphIds: additionalParagraph._id } }, // Add the new paragraph ID
+            { new: true } // Return the updated category
+        );
+
+        console.log("10 additional questions and content added to Technology category successfully!");
+    } catch (error) {
+        console.error("Error adding more data to Technology category:", error);
+    }
+};
+
+// addMoreDataToTechnologyCategory();
+
+
 
 // ----------------add quiz data in DB--------------------
 
 // Enable graceful stop
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
+process.once("SIGINT", () => {
+    console.log("SIGINT Bot Stopped!");
+    bot.stop("SIGINT")
+});
+process.once("SIGTERM", () => {
+    console.log("SIGTERM Bot Stopped!");
+    bot.stop("SIGTERM")
+});
