@@ -37,6 +37,8 @@ Before setting up the bot, make sure you have:
 
     Follow instructions he given and create a new name to your bot. If you are making a bot only for experimentation, as it has to be a unique name, you can use namespace your bot by placing your name before it in its username. By the way, its screen name can be anything you like.
 
+![Screenshot](https://www.siteguarding.com/images/telegram_3.png)
+
 5. Congratulations! You've just created your Telegram bot. You will see a new API token generated for it.
 In sample above it's 270485614:AAHfiqksKZ8WmR2zSjiQ7_v4TMAKdiHm9T0
 
