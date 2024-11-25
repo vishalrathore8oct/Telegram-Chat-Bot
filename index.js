@@ -9,6 +9,11 @@ import { User } from "./src/models/user.models.js";
 
 dotenv.config();
 
+/* The code is using  to connect to a MongoDB database using Mongoose. It is using
+environment variables `process.env.MONGODB_URI` and `process.env.DATABASE_NAME` to construct the
+connection URL. Once the connection is successful, it logs "Connected to MongoDB Successfully" and
+then launches a bot. If there is an error during the connection process, it logs the error and exits
+the process with an exit code of 1. */
 (async () => {
     try {
         await mongoose.connect(
@@ -24,10 +29,16 @@ dotenv.config();
     }
 })();
 
+/* The code is using the Telegraf library to create a bot. It seems to be creating a new instance of a Telegraf bot
+using the TELEGRAM_BOT_TOKEN environment variable. */
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 // ---------------------Telegram UI part-------------------//
 
+/* The code is setting up a start command for a bot. When the bot receives the start
+command, it will reply with a greeting message addressing the user by their first name and then
+prompt the user to enter or press /startquiz to begin a quiz. If any errors occur during this
+process, the bot will log the error, reply to the user that an error occurred, and stop the bot. */
 bot.start(async (ctx) => {
     try {
         await ctx.reply(`Hello ${ctx.from.first_name}!`);
@@ -40,6 +51,12 @@ bot.start(async (ctx) => {
 });
 
 
+/* This Function code is triggered when the "startquiz" command is called. It
+first updates or creates a user document in a MongoDB database using Mongoose. It sets the initial
+values for correctAnswerCount, wrongAnswerCount, and currentQuestionIndex for the user. Then it
+sends a welcome message to the user and calls the function sendCategory to start the quiz by sending
+the categories to choose from. If any error occurs during the process, it catches the error, logs
+it, sends an error message to the user, and stops the bot. */
 bot.command("startquiz", async (ctx) => {
     try {
         await User.findOneAndUpdate(
@@ -69,6 +86,14 @@ bot.command("startquiz", async (ctx) => {
     }
 });
 
+/**
+ * The function `sendCategory` fetches categories, creates a keyboard with category options, and sends
+ * a message to select a category to the user.
+ * @param ctx - ctx is an object that represents the context of the current operation in a Telegram
+ * bot. It typically includes information about the message, user, chat, and other relevant data needed
+ * to handle the user's interaction. In this case, the `sendCategory` function is using `ctx` to
+ * interact with the user and send them a message with a keyboard of categories to choose from.
+ */
 async function sendCategory(ctx) {
     try {
         const categories = await Category.find();
@@ -92,6 +117,19 @@ async function sendCategory(ctx) {
     }
 }
 
+/**
+ * The function `sendParagraph` selects a random paragraph from an array of paragraph IDs, retrieves
+ * the paragraph data, sends it to a chat context, and provides a button to start a quiz related to the
+ * paragraph. If an error occurs during the process, it sends an error message to the chat context.
+ * @param ctx - The `ctx` parameter in the `sendParagraph` function likely refers to the context object
+ * or context data that is being passed to the function. This context object typically contains
+ * information about the current state of the application or the environment in which the function is
+ * being executed. It may include details such as user
+ * @param paragraphIdsArr - The `paragraphIdsArr` parameter is an array containing the IDs of multiple
+ * paragraphs. The function `sendParagraph` randomly selects an ID from this array, fetches the
+ * corresponding paragraph data using the `Paragraph.findById` method, and then sends the paragraph
+ * content to the user in a chat context (`ctx
+ */
 async function sendParagraph(ctx, paragraphIdsArr) {
     try {
         const randomIndex = Math.floor(Math.random() * paragraphIdsArr.length);
@@ -132,6 +170,18 @@ async function sendParagraph(ctx, paragraphIdsArr) {
     }
 }
 
+/**
+ * The function `sendQuestion` fetches a question based on the user's current question index and sends
+ * it to the user with multiple choice options as a reply keyboard.
+ * @param ctx - `ctx` is an object that represents the context of the current message or interaction in
+ * a chat application. It typically contains information about the user, the message, and other
+ * relevant details needed to process the user's request or respond to their actions. In your code
+ * snippet, `ctx` seems to be
+ * @param questionIdsArr - The `questionIdsArr` parameter in the `sendQuestion` function is an array
+ * containing the IDs of questions that need to be sent to the user. The function retrieves the user's
+ * information, updates the current question ID in the database, fetches the question data based on the
+ * current index, and
+ */
 async function sendQuestion(ctx, questionIdsArr) {
     try {
         console.log(questionIdsArr);
@@ -200,6 +250,10 @@ async function sendQuestion(ctx, questionIdsArr) {
     }
 }
 
+/* The below code is an event handler for a Telegram bot that listens for callback queries. When a
+callback query is received, the code parses the data from the query, performs different actions
+based on the decoded data, and responds accordingly. Here is a breakdown of the main
+functionalities: */
 bot.on("callback_query", async (ctx) => {
     try {
         const callbackData = ctx.callbackQuery.data;
@@ -362,6 +416,7 @@ bot.on("callback_query", async (ctx) => {
 // ---------------------Telegram UI part-------------------//
 
 // -------------------add quiz data in DB------------------
+
 
 const insertNatureQuizData = async () => {
     try {
@@ -1532,7 +1587,12 @@ const addMoreDataToTechnologyCategory = async () => {
 
 // ----------------add quiz data in DB--------------------
 
-// Enable graceful stop
+
+/* The below code is setting up event listeners for the `SIGINT` and `SIGTERM` signals in a Node.js
+application. When the application receives a `SIGINT` signal (generally sent by pressing `Ctrl + C`
+in the terminal), it will log "SIGINT Bot Stopped!" to the console and then stop the bot. Similarly,
+when the application receives a `SIGTERM` signal (often used for graceful shutdown in production
+environments), it will log "SIGTERM Bot Stopped!" to the console and stop the bot as well. */
 process.once("SIGINT", () => {
     console.log("SIGINT Bot Stopped!");
     bot.stop("SIGINT")
