@@ -185,6 +185,37 @@ and then you have to comment that function calls, because we use this function j
 
     - Run npm install again to ensure all packages are installed.
 
+## Functional Modules
+
+### Start Command
+- Greets the user and introduces the quiz functionality.
+- Guides users to `/startquiz`.
+
+
+#### Category Selection
+- Users choose from categories (e.g., Nature, Science).
+- Displays categories dynamically using inline buttons.
+
+#### Paragraph Delivery
+- Presents a reading passage related to the chosen category.
+- Includes a button to start the quiz after reading.
+
+#### Question Management
+- Fetches and displays quiz questions one at a time with multiple-choice options.
+- Validates the user's answer and updates their score in the database.
+- Supports navigation (Next Question, Select Another Category).
+
+### Database Seeding
+- Functions to insert pre-defined quiz data (e.g., categories, paragraphs, questions).
+- Categories include Nature, Science, History, and Technology, with multiple questions.
+
+### Error Handling
+- Logs errors and gracefully stops the bot if a critical error occurs.
+
+### Signal Handling
+- Responds to termination signals (`SIGINT`, `SIGTERM`) for graceful shutdown.
+
+
 ### About Me
 1. I’m a junior developer who enjoys learning by building fun projects like this one. If you have suggestions or questions, feel free to share them on my Socials, which you will find on my [GitHub](https://github.com/vishalrathore8oct) Profile!
 
