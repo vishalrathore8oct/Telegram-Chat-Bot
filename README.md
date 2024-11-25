@@ -4,6 +4,9 @@ This Telegram bot allows users to take interactive quizzes on various topics. Us
 
 ---
 
+# This is My DataBase Schema
+## Click on  [Schema Design](https://app.eraser.io/workspace/5jwkIuangTd0X721xuZi?origin=share) to visite my Schema on Eraser.io Platform.
+
 ## Features
 
 - **Category Selection**: Users can choose a topic of interest.
