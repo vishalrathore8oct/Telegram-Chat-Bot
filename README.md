@@ -21,9 +21,28 @@ Before setting up the bot, make sure you have:
 1. **Node.js** installed (v14 or later). Download it from [Node.js Official Website](https://nodejs.org/).
 2. **npm** (Node Package Manager), which comes with Node.js.
 3. **MongoDB** installed locally or have access to a remote MongoDB server.
-4. A **Telegram Bot Token**. You can create a bot and get the token using [BotFather](https://core.telegram.org/bots#botfather).
+4. **Telegram Bot Token**. You can create a bot and get the token using [BotFather](https://core.telegram.org/bots#botfather).
 
 ---
+
+## Steps to get bot token form BotFather
+
+1. First you have to login your Telegram Profile.
+2. Find telegram bot named "@botfarther", he will help you with creating and managing your bot.
+![Screenshot](https://www.siteguarding.com/images/telegram_1.png)
+3. Print “/help” and you will see all possible commands that the botfather can operate.
+![Screenshot](https://www.siteguarding.com/images/telegram_2.png)
+
+4. To create a new bot type “/newbot” or click on it.
+
+    Follow instructions he given and create a new name to your bot. If you are making a bot only for experimentation, as it has to be a unique name, you can use namespace your bot by placing your name before it in its username. By the way, its screen name can be anything you like.
+
+5. Congratulations! You've just created your Telegram bot. You will see a new API token generated for it.
+In sample above it's 270485614:AAHfiqksKZ8WmR2zSjiQ7_v4TMAKdiHm9T0
+
+Copy your API token to Your Project configration file name .evn .
+
+
 
 ## How to Set It Up Locally
 
