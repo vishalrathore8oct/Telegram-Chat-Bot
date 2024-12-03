@@ -1,13 +1,12 @@
 import dotenv from "dotenv";
 import { Telegraf } from "telegraf";
 import { message } from "telegraf/filters";
-import mongoose from "mongoose";
+import { dbConnection } from "./src/db/db.connection.js";
 
 import { Category } from "./src/models/category.models.js";
 import { Paragraph } from "./src/models/paragraph.models.js";
 import { Question } from "./src/models/quesion.models.js";
 import { User } from "./src/models/user.models.js";
-
 
 import { insertNatureQuizData, addMoreToNatureCategory } from "./src/quiz data/nature.js";
 import { addScienceQuizData, addMoreToScienceCategory } from "./src/quiz data/science.js";
@@ -17,28 +16,24 @@ import { createTechnologyCategory, addMoreDataToTechnologyCategory } from "./src
 
 dotenv.config();
 
-/* The code is using  to connect to a MongoDB database using Mongoose. It is using
-environment variables `process.env.MONGODB_URI` and `process.env.DATABASE_NAME` to construct the
-connection URL. Once the connection is successful, it logs "Connected to MongoDB Successfully" and
-then launches a bot. If there is an error during the connection process, it logs the error and exits
-the process with an exit code of 1. */
-(async () => {
-    try {
-        await mongoose.connect(
-            `${process.env.MONGODB_URI}/${process.env.DATABASE_NAME}`
-        );
-        console.log("Connected to MongoDB Successfully");
 
-        bot.launch();
-        console.log("Bot is running...");
-    } catch (error) {
-        console.error("Error connecting to MongoDB:", error);
-        process.exit(1);
-    }
-})();
+/* The above code snippet is written in JavaScript and it seems to be setting up a connection to a
+MongoDB database using `dbConnection()`. Once the connection is established successfully, it
+launches a bot and logs a message "Bot is running...". If there is an error during the connection
+process, it logs an error message "Error Bot connecting to MongoDB:" along with the error details
+and exits the process with code 1. */
+dbConnection().then(() => {
+    bot.launch();
+    console.log("Bot is running...");
+}).catch((error) => {
+    console.error("Error Bot connecting to MongoDB:", error);
+    process.exit(1);
+});
 
-/* The code is using the Telegraf library to create a bot. It seems to be creating a new instance of a Telegraf bot
-using the TELEGRAM_BOT_TOKEN environment variable. */
+
+/* The above code is creating a new instance of the Telegraf bot using the TELEGRAM_BOT_TOKEN
+environment variable. This code is likely part of a Telegram bot implementation in JavaScript using
+the Telegraf library. */
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 // ---------------------Telegram UI part-------------------//
