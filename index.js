@@ -22,6 +22,7 @@ MongoDB database using `dbConnection()`. Once the connection is established succ
 launches a bot and logs a message "Bot is running...". If there is an error during the connection
 process, it logs an error message "Error Bot connecting to MongoDB:" along with the error details
 and exits the process with code 1. */
+
 dbConnection().then(() => {
     bot.launch();
     console.log("Bot is running...");
@@ -34,6 +35,7 @@ dbConnection().then(() => {
 /* The above code is creating a new instance of the Telegraf bot using the TELEGRAM_BOT_TOKEN
 environment variable. This code is likely part of a Telegram bot implementation in JavaScript using
 the Telegraf library. */
+
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 // ---------------------Telegram UI part-------------------//
@@ -42,6 +44,7 @@ const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 command, it will reply with a greeting message addressing the user by their first name and then
 prompt the user to enter or press /startquiz to begin a quiz. If any errors occur during this
 process, the bot will log the error, reply to the user that an error occurred, and stop the bot. */
+
 bot.start(async (ctx) => {
     try {
         await ctx.reply(`Hello ${ctx.from.first_name}!`);
@@ -60,6 +63,7 @@ values for correctAnswerCount, wrongAnswerCount, and currentQuestionIndex for th
 sends a welcome message to the user and calls the function sendCategory to start the quiz by sending
 the categories to choose from. If any error occurs during the process, it catches the error, logs
 it, sends an error message to the user, and stops the bot. */
+
 bot.command("startquiz", async (ctx) => {
     try {
         await User.findOneAndUpdate(
@@ -97,6 +101,7 @@ bot.command("startquiz", async (ctx) => {
  * to handle the user's interaction. In this case, the `sendCategory` function is using `ctx` to
  * interact with the user and send them a message with a keyboard of categories to choose from.
  */
+
 async function sendCategory(ctx) {
     try {
         const categories = await Category.find();
@@ -185,6 +190,7 @@ async function sendParagraph(ctx, paragraphIdsArr) {
  * information, updates the current question ID in the database, fetches the question data based on the
  * current index, and
  */
+
 async function sendQuestion(ctx, questionIdsArr) {
     try {
         console.log(questionIdsArr);
@@ -257,6 +263,7 @@ async function sendQuestion(ctx, questionIdsArr) {
 callback query is received, the code parses the data from the query, performs different actions
 based on the decoded data, and responds accordingly. Here is a breakdown of the main
 functionalities: */
+
 bot.on("callback_query", async (ctx) => {
     try {
         const callbackData = ctx.callbackQuery.data;
@@ -416,6 +423,10 @@ bot.on("callback_query", async (ctx) => {
     }
 });
 
+/* The below code is a snippet of JavaScript code for a bot that responds to text messages. It uses the
+`bot.on` method to listen for text messages and then replies with a message saying that they are
+currently working on other features, but users can still use the quiz bot by typing `/startquiz`. */
+
 bot.on(message("text"), async (ctx) => {
     await ctx.reply("We are currently working on other's feature. Still you can use our quiz bot by typing /startquiz");
 })
@@ -424,29 +435,17 @@ bot.on(message("text"), async (ctx) => {
 
 // -------------------add quiz data in DB------------------
 
-
 // insertNatureQuizData();
-
 // addMoreToNatureCategory();
 
-
-
 // addScienceQuizData();
-
 // addMoreToScienceCategory();
 
-
-
 // createHistoryCategory();
-
 // insertHistoryQuizData();
 
-
-
 // createTechnologyCategory();
-
 // addMoreDataToTechnologyCategory();
-
 
 // ----------------add quiz data in DB--------------------
 
@@ -456,6 +455,7 @@ application. When the application receives a `SIGINT` signal (generally sent by 
 in the terminal), it will log "SIGINT Bot Stopped!" to the console and then stop the bot. Similarly,
 when the application receives a `SIGTERM` signal (often used for graceful shutdown in production
 environments), it will log "SIGTERM Bot Stopped!" to the console and stop the bot as well. */
+
 process.once("SIGINT", () => {
     console.log("SIGINT Bot Stopped!");
     bot.stop("SIGINT")
