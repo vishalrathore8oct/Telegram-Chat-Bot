@@ -2,6 +2,14 @@
 
 This Telegram bot allows users to take interactive quizzes on various topics. Users can choose a category, read a paragraph, and answer questions based on the content. The bot tracks their progress and provides feedback for each question.
 
+## 🤖 Telegram Bot
+
+Check out the bot on Telegram: [@YourBotUsername](https://t.me/TetrisQuizBot)
+
+Or click the button below to open it directly:
+
+[![Open in Telegram](https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge&logo=telegram)](https://t.me/TetrisQuizBot)
+
 
 # This is My DataBase Schema
 ## Click on  [Schema Design](https://app.eraser.io/workspace/5jwkIuangTd0X721xuZi?origin=share) to visite my Schema on Eraser.io Platform.
